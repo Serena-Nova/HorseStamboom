@@ -764,8 +764,16 @@ function HorseSidebar({ horses, focusId, focusMode, onPick, onShowAll, onClose }
     /* @__PURE__ */ React.createElement("span", { className: "min-w-0 flex-1 truncate" }, h.name)
   )), sorted.length === 0 && /* @__PURE__ */ React.createElement("p", { className: "px-3 py-4 text-center text-xs text-stone-600" }, "Geen paarden gevonden.")));
 }
-function LastGenPanel({ roots, focusId, focusMode, onPick }) {
-  return /* @__PURE__ */ React.createElement("div", { className: "flex w-40 shrink-0 flex-col border-r border-stone-800 bg-stone-950" }, /* @__PURE__ */ React.createElement("div", { className: "border-b border-stone-800 px-3 py-2.5 text-xs uppercase tracking-wide text-stone-500" }, "Stambomen (", roots.length, ")"), /* @__PURE__ */ React.createElement("div", { className: "flex-1 overflow-y-auto" }, roots.map((h) => /* @__PURE__ */ React.createElement(
+function LastGenPanel({ roots, focusId, focusMode, onPick, onNewStamboom }) {
+  return /* @__PURE__ */ React.createElement("div", { className: "flex w-40 shrink-0 flex-col border-r border-stone-800 bg-stone-950" }, /* @__PURE__ */ React.createElement("div", { className: "border-b border-stone-800 px-3 py-2.5 text-xs uppercase tracking-wide text-stone-500" }, "Stambomen (", roots.length, ")"), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: onNewStamboom,
+      className: "flex items-center gap-1.5 border-b border-stone-800 px-3 py-2 text-left text-xs font-medium text-amber-500 hover:bg-amber-500/10"
+    },
+    /* @__PURE__ */ React.createElement(Plus, { size: 13 }),
+    " Begin nieuw stamboom"
+  ), /* @__PURE__ */ React.createElement("div", { className: "flex-1 overflow-y-auto" }, roots.map((h) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: h.id,
@@ -863,6 +871,11 @@ function App() {
     const x = (el ? el.scrollLeft : 0) + 60 + horses.length % 5 * 20;
     const y = (el ? el.scrollTop : 0) + 60 + horses.length % 5 * 20;
     addHorseAt("Nieuw paard", x, y);
+  };
+  const handleNewStamboom = async () => {
+    const id = await addHorseAt("Nieuw paard", 60, 60);
+    setFocusId(id);
+    setFocusMode(true);
   };
   const onDrag = (id, x, y) => {
     dragPositions.current[id] = { x, y };
@@ -1136,7 +1149,7 @@ function App() {
       return (_a3 = map.get(id)) == null ? void 0 : _a3.name;
     }).filter(Boolean);
     return /* @__PURE__ */ React.createElement("div", { className: "mt-2 rounded-lg border px-3 py-2 text-xs", style: stillCarrying.length === 0 ? { borderColor: "#10B98166", background: "#10B98118" } : { borderColor: "#F59E0B66", background: "#F59E0B18" } }, stillCarrying.length === 0 ? /* @__PURE__ */ React.createElement("p", { style: { color: "#34D399" } }, "\u2713 ", (_a2 = map.get(focusId)) == null ? void 0 : _a2.name, " zit bij niemand in de lijst meer binnen ", depth, " generaties \u2014 vrij te gebruiken.") : /* @__PURE__ */ React.createElement("p", { style: { color: "#FBBF24" } }, (_b2 = map.get(focusId)) == null ? void 0 : _b2.name, " zit nog binnen ", depth, " generaties bij: ", stillCarrying.join(", "), ". Met alle anderen kan hij weer ingezet worden."));
-  })()))), /* @__PURE__ */ React.createElement("div", { className: "flex flex-1 overflow-hidden" }, /* @__PURE__ */ React.createElement(LastGenPanel, { roots: rootHorses, focusId, focusMode, onPick: onFocusToggle }), /* @__PURE__ */ React.createElement("div", { ref: canvasRef, className: "relative flex-1 overflow-auto bg-[radial-gradient(circle,_#292524_1px,_transparent_1px)] [background-size:22px_22px]" }, showSidebar && /* @__PURE__ */ React.createElement(
+  })()))), /* @__PURE__ */ React.createElement("div", { className: "flex flex-1 overflow-hidden" }, /* @__PURE__ */ React.createElement(LastGenPanel, { roots: rootHorses, focusId, focusMode, onPick: onFocusToggle, onNewStamboom: handleNewStamboom }), /* @__PURE__ */ React.createElement("div", { ref: canvasRef, className: "relative flex-1 overflow-auto bg-[radial-gradient(circle,_#292524_1px,_transparent_1px)] [background-size:22px_22px]" }, showSidebar && /* @__PURE__ */ React.createElement(
     HorseSidebar,
     {
       horses,
