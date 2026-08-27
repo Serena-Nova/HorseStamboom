@@ -453,7 +453,7 @@ function HorseSearchList({ horses, excludeId, onPick, onCreate, genderFilter }) 
       placeholder: "Zoek bestaand paard of typ nieuwe naam\u2026",
       className: "w-full rounded-lg border border-stone-700 bg-stone-800/60 px-3 py-2 text-sm text-stone-100 outline-none focus:border-amber-600/60"
     }
-  ), /* @__PURE__ */ React.createElement("div", { className: "mt-2 max-h-56 overflow-auto" }, results.map((h) => /* @__PURE__ */ React.createElement("button", { key: h.id, onClick: () => onPick(h.id), className: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-stone-200 hover:bg-stone-800" }, /* @__PURE__ */ React.createElement("span", { className: "h-2.5 w-2.5 rounded-full shrink-0", style: { background: h.color } }), h.name)), q.trim() && /* @__PURE__ */ React.createElement("button", { onClick: () => onCreate(q.trim()), className: "mt-1 flex w-full items-center gap-2 rounded-lg border-t border-stone-800 px-2 py-2 text-left text-sm text-amber-500 hover:bg-stone-800" }, /* @__PURE__ */ React.createElement(Plus, { size: 14 }), ' Nieuw paard: "', q.trim(), '"'), similar.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "mt-2 flex items-start gap-1.5 rounded-lg border border-amber-700/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-400" }, /* @__PURE__ */ React.createElement(AlertTriangle, { size: 13, className: "mt-0.5 shrink-0" }), /* @__PURE__ */ React.createElement("span", null, "Lijkt op ", similar.map((h) => `"${h.name}"`).join(", "), " \u2014 bedoelde je dat paard? Een typefoutje maakt hier stiekem een dubbel paard van, waardoor de inteelt-check niet meer klopt."))));
+  ), /* @__PURE__ */ React.createElement("div", { className: "mt-2 max-h-56 overflow-auto" }, results.map((h) => /* @__PURE__ */ React.createElement("button", { key: h.id, onClick: () => onPick(h.id), className: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-stone-200 hover:bg-stone-800" }, /* @__PURE__ */ React.createElement("span", { className: "h-2.5 w-2.5 rounded-full shrink-0", style: { background: h.color } }), /* @__PURE__ */ React.createElement("span", { className: "flex-1 truncate" }, h.name), h._trashed && /* @__PURE__ */ React.createElement("span", { className: "shrink-0 rounded-full border border-stone-700 px-1.5 py-0.5 text-[10px] text-stone-500" }, "los"))), q.trim() && /* @__PURE__ */ React.createElement("button", { onClick: () => onCreate(q.trim()), className: "mt-1 flex w-full items-center gap-2 rounded-lg border-t border-stone-800 px-2 py-2 text-left text-sm text-amber-500 hover:bg-stone-800" }, /* @__PURE__ */ React.createElement(Plus, { size: 14 }), ' Nieuw paard: "', q.trim(), '"'), similar.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "mt-2 flex items-start gap-1.5 rounded-lg border border-amber-700/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-400" }, /* @__PURE__ */ React.createElement(AlertTriangle, { size: 13, className: "mt-0.5 shrink-0" }), /* @__PURE__ */ React.createElement("span", null, "Lijkt op ", similar.map((h) => `"${h.name}"`).join(", "), " \u2014 bedoelde je dat paard? Een typefoutje maakt hier stiekem een dubbel paard van, waardoor de inteelt-check niet meer klopt."))));
 }
 function HorseCard({ horse, onDrag, onDragEnd, onRename, onCycleGender, onDelete, onPickParent, onSelectForConnect, connecting, connectSelected, highlighted, occurrenceCount, map, reuseCount, zoom, onOpenNotes, onFocusToggle, isFocused }) {
   var _a, _b, _c;
@@ -858,13 +858,8 @@ function App() {
     if (compareB === id) setCompareB(null);
   };
   const onRestore = async (id) => {
-    const h0 = trash.find((h) => h.id === id);
-    if (!h0) return;
-    const { deletedAt, ...rest } = h0;
-    const idTaken = horses.some((h) => h.id === rest.id);
-    const restored = idTaken ? { ...rest, id: uid() } : rest;
-    await persistHorses([...horses, restored]);
-    await persistTrash(trash.filter((h) => h.id !== id));
+    const { nextHorses } = await restoreFromTrash(id);
+    await persistHorses(nextHorses);
   };
   const onPermanentDelete = async (id) => {
     if (!window.confirm("Definitief verwijderen? Dit paard is dan echt weg en kan niet meer worden teruggehaald.")) return;
@@ -874,8 +869,19 @@ function App() {
   const setParent = async (childId, role, parentId) => {
     persistHorses(horses.map((h) => h.id === childId ? { ...h, [role]: parentId } : h));
   };
+  const restoreFromTrash = async (id) => {
+    const h0 = trash.find((h) => h.id === id);
+    if (!h0) return { nextHorses: horses, id };
+    const { deletedAt, ...rest } = h0;
+    const idTaken = horses.some((h) => h.id === rest.id);
+    const restored = idTaken ? { ...rest, id: uid() } : rest;
+    const nextHorses = [...horses, restored];
+    await persistTrash(trash.filter((h) => h.id !== id));
+    return { nextHorses, id: restored.id };
+  };
   const handleQuickPick = async (parentId) => {
-    await setParent(quickAdd.childId, quickAdd.role, parentId);
+    const { nextHorses, id } = await restoreFromTrash(parentId);
+    await persistHorses(nextHorses.map((h) => h.id === quickAdd.childId ? { ...h, [quickAdd.role]: id } : h));
     setQuickAdd(null);
   };
   const handleQuickCreate = async (name) => {
@@ -1142,7 +1148,7 @@ function App() {
   ), quickAdd && /* @__PURE__ */ React.createElement(Modal, { title: `${quickAdd.role === "sireId" ? "Vader" : "Moeder"} van ${quickAdd.childName}`, onClose: () => setQuickAdd(null) }, /* @__PURE__ */ React.createElement(
     HorseSearchList,
     {
-      horses: horses.filter((h) => h.id !== quickAdd.childId),
+      horses: [...horses, ...trash.map((h) => ({ ...h, _trashed: true }))].filter((h) => h.id !== quickAdd.childId),
       onPick: handleQuickPick,
       onCreate: handleQuickCreate,
       genderFilter: quickAdd.role === "sireId" ? "hengst" : "merrie"
@@ -1150,10 +1156,12 @@ function App() {
   )), pickingGridHorse && /* @__PURE__ */ React.createElement(Modal, { title: "Voor welk paard?", onClose: () => setPickingGridHorse(false) }, /* @__PURE__ */ React.createElement(
     HorseSearchList,
     {
-      horses,
-      onPick: (id) => {
+      horses: [...horses, ...trash.map((h) => ({ ...h, _trashed: true }))],
+      onPick: async (id) => {
+        const { nextHorses, id: finalId } = await restoreFromTrash(id);
+        if (nextHorses !== horses) await persistHorses(nextHorses);
         setPickingGridHorse(false);
-        setGridForId(id);
+        setGridForId(finalId);
       },
       onCreate: async (name) => {
         const id = await addHorseAt(name, 60, 60);
