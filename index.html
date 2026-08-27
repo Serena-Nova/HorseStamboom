@@ -590,16 +590,16 @@ function ConnectorLines({ horses, map, highlightIds, visibleIds }) {
       const p = pid ? map.get(pid) : null;
       if (!p) return;
       if (visibleIds && !visibleIds.has(p.id)) return;
-      const x1 = p.x + CARD_W, y1 = p.y + CARD_H / 2;
-      const x2 = h.x, y2 = h.y + CARD_H / 2;
-      const mx = (x1 + x2) / 2;
+      const x1 = p.x + CARD_W / 2, y1 = p.y + CARD_H;
+      const x2 = h.x + CARD_W / 2, y2 = h.y;
+      const my = (y1 + y2) / 2;
       const isHi = highlightIds && highlightIds.has(p.id) && highlightIds.has(h.id);
       lines.push(
         /* @__PURE__ */ React.createElement(
           "path",
           {
             key: h.id + "-" + role,
-            d: `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`,
+            d: `M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`,
             fill: "none",
             stroke: isHi ? "#F0B429" : role === "sireId" ? "#5C7C9E" : "#B5566B",
             strokeWidth: isHi ? 2.5 : 1.5,
