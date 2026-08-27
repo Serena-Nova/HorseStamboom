@@ -764,6 +764,24 @@ function HorseSidebar({ horses, focusId, focusMode, onPick, onShowAll, onClose }
     /* @__PURE__ */ React.createElement("span", { className: "min-w-0 flex-1 truncate" }, h.name)
   )), sorted.length === 0 && /* @__PURE__ */ React.createElement("p", { className: "px-3 py-4 text-center text-xs text-stone-600" }, "Geen paarden gevonden.")));
 }
+function LastGenPanel({ horses, focusId, focusMode, onPick }) {
+  const referenced = /* @__PURE__ */ new Set();
+  horses.forEach((h) => {
+    if (h.sireId) referenced.add(h.sireId);
+    if (h.damId) referenced.add(h.damId);
+  });
+  const roots = horses.filter((h) => !referenced.has(h.id)).sort((a, b) => a.name.localeCompare(b.name));
+  return /* @__PURE__ */ React.createElement("div", { className: "flex w-40 shrink-0 flex-col border-r border-stone-800 bg-stone-950" }, /* @__PURE__ */ React.createElement("div", { className: "border-b border-stone-800 px-3 py-2.5 text-xs uppercase tracking-wide text-stone-500" }, "Stambomen (", roots.length, ")"), /* @__PURE__ */ React.createElement("div", { className: "flex-1 overflow-y-auto" }, roots.map((h) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: h.id,
+      onClick: () => onPick(h.id),
+      className: `flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${focusMode && focusId === h.id ? "bg-emerald-500/10 text-emerald-400" : "text-stone-300 hover:bg-stone-900"}`
+    },
+    /* @__PURE__ */ React.createElement("span", { className: "h-2 w-2 shrink-0 rounded-full", style: { background: h.color } }),
+    /* @__PURE__ */ React.createElement("span", { className: "min-w-0 flex-1 truncate" }, h.name)
+  )), roots.length === 0 && /* @__PURE__ */ React.createElement("p", { className: "px-3 py-4 text-center text-xs text-stone-600" }, "Nog geen paarden.")));
+}
 function TrashRow({ h, onRestore, onPermanentDelete }) {
   return /* @__PURE__ */ React.createElement(
     "div",
@@ -1117,7 +1135,7 @@ function App() {
   })(), compareResult && /* @__PURE__ */ React.createElement("div", { className: "mt-3" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3 rounded-lg border px-3 py-2.5", style: { borderColor: compareResult.cat.border, background: compareResult.cat.bg } }, /* @__PURE__ */ React.createElement("span", { className: "text-2xl font-bold", style: { color: compareResult.cat.color } }, (compareResult.f * 100).toFixed(2), "%"), /* @__PURE__ */ React.createElement("div", { className: "text-sm" }, /* @__PURE__ */ React.createElement("p", { style: { color: compareResult.cat.color }, className: "font-medium" }, "Verwachte veulen-COI \u2014 ", compareResult.cat.label), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-400" }, compareResult.f <= 0.05 ? "Lage inteelt, geen reden tot zorgen." : compareResult.f <= 0.125 ? "Merkbare inteelt \u2014 overweeg een minder verwante partner." : "Sterke inteelt \u2014 kans op inteeltdepressie bij het veulen."))), compareResult.contributions.length > 0 && /* @__PURE__ */ React.createElement("ul", { className: "mt-2 space-y-0.5 text-xs text-stone-300" }, compareResult.contributions.map((c) => {
     var _a2, _b2;
     return /* @__PURE__ */ React.createElement("li", { key: c.id, className: "flex items-center gap-1.5" }, /* @__PURE__ */ React.createElement("span", { className: "h-2 w-2 rounded-full shrink-0", style: { background: (_a2 = map.get(c.id)) == null ? void 0 : _a2.color } }), /* @__PURE__ */ React.createElement("b", null, (_b2 = map.get(c.id)) == null ? void 0 : _b2.name), /* @__PURE__ */ React.createElement("span", { className: "text-stone-500" }, "\u2014 +", (c.contribution * 100).toFixed(2), "% (dichtsbijzijnde gen ", c.minN1, "/", c.minN2, ")"));
-  })), compareResult.genderWarning && /* @__PURE__ */ React.createElement("p", { className: "mt-1.5 text-xs text-stone-500" }, "Let op: dit zijn twee paarden van hetzelfde geslacht.")))), /* @__PURE__ */ React.createElement("div", { ref: canvasRef, className: "relative flex-1 overflow-auto bg-[radial-gradient(circle,_#292524_1px,_transparent_1px)] [background-size:22px_22px]" }, showSidebar && /* @__PURE__ */ React.createElement(
+  })), compareResult.genderWarning && /* @__PURE__ */ React.createElement("p", { className: "mt-1.5 text-xs text-stone-500" }, "Let op: dit zijn twee paarden van hetzelfde geslacht.")))), /* @__PURE__ */ React.createElement("div", { className: "flex flex-1 overflow-hidden" }, /* @__PURE__ */ React.createElement(LastGenPanel, { horses, focusId, focusMode, onPick: onFocusToggle }), /* @__PURE__ */ React.createElement("div", { ref: canvasRef, className: "relative flex-1 overflow-auto bg-[radial-gradient(circle,_#292524_1px,_transparent_1px)] [background-size:22px_22px]" }, showSidebar && /* @__PURE__ */ React.createElement(
     HorseSidebar,
     {
       horses,
@@ -1204,7 +1222,7 @@ function App() {
       onClose: () => setGridForId(null),
       onSave: savePedigreeGrid
     }
-  ), relationPair && /* @__PURE__ */ React.createElement(RelationModal, { a: relationPair.a, b: relationPair.b, onClose: () => setRelationPair(null), onPick: applyRelation }), showTrash && /* @__PURE__ */ React.createElement(TrashModal, { trash, onClose: () => setShowTrash(false), onRestore, onPermanentDelete }));
+  ), relationPair && /* @__PURE__ */ React.createElement(RelationModal, { a: relationPair.a, b: relationPair.b, onClose: () => setRelationPair(null), onPick: applyRelation }), showTrash && /* @__PURE__ */ React.createElement(TrashModal, { trash, onClose: () => setShowTrash(false), onRestore, onPermanentDelete })));
 }
 function ArrowSwap() {
   return /* @__PURE__ */ React.createElement("span", { className: "text-stone-600" }, "\u2194");
