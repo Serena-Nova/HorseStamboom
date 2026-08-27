@@ -780,6 +780,9 @@ function App() {
     persistHorses(horses.map((x) => x.id === id ? { ...x, gender: next } : x));
   };
   const onDelete = async (id) => {
+    const h0 = map.get(id);
+    const naam = h0 ? h0.name : "dit paard";
+    if (!window.confirm(`Weet je zeker dat je "${naam}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) return;
     const next = horses.filter((h) => h.id !== id).map((h) => ({
       ...h,
       sireId: h.sireId === id ? null : h.sireId,
