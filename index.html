@@ -809,8 +809,8 @@ function App() {
   const canvasRef = useRef(null);
   const map = useMemo(() => byId(horses), [horses]);
   const persistHorses = useCallback((next) => persist(next), [persist]);
-  const addHorseAt = useCallback(async (name, x, y) => {
-    const h = { id: uid(), name, gender: "onbekend", sireId: null, damId: null, notes: "", color: nextColor(horses.length), x, y };
+  const addHorseAt = useCallback(async (name, x, y, gender = "onbekend") => {
+    const h = { id: uid(), name, gender, sireId: null, damId: null, notes: "", color: nextColor(horses.length), x, y };
     await persistHorses([...horses, h]);
     return h.id;
   }, [horses, persistHorses]);
@@ -888,7 +888,8 @@ function App() {
     const child = map.get(quickAdd.childId);
     const x = (child ? child.x : 60) - 40;
     const y = (child ? child.y : 60) + (quickAdd.role === "sireId" ? -100 : 100);
-    const id = await addHorseAt(name, x, y);
+    const gender = quickAdd.role === "sireId" ? "hengst" : "merrie";
+    const id = await addHorseAt(name, x, y, gender);
     await setParent(quickAdd.childId, quickAdd.role, id);
     setQuickAdd(null);
   };
@@ -958,12 +959,13 @@ function App() {
   const savePedigreeGrid = useCallback(async (rootId, draft) => {
     const working = [...horses];
     const isNew = /* @__PURE__ */ new Set();
-    const findOrCreate = (name) => {
+    const findOrCreate = (name, path) => {
       if (!name || !name.trim()) return null;
       const trimmed = name.trim();
       let h = working.find((x) => x.name.toLowerCase() === trimmed.toLowerCase());
       if (!h) {
-        h = { id: uid(), name: trimmed, gender: "onbekend", sireId: null, damId: null, notes: "", color: nextColor(working.length), x: 40, y: 40 };
+        const gender = path.endsWith("V") ? "hengst" : path.endsWith("M") ? "merrie" : "onbekend";
+        h = { id: uid(), name: trimmed, gender, sireId: null, damId: null, notes: "", color: nextColor(working.length), x: 40, y: 40 };
         working.push(h);
         isNew.add(h.id);
       }
@@ -976,7 +978,7 @@ function App() {
         resolved[path] = slot.id;
         return;
       }
-      const h = findOrCreate(slot.name);
+      const h = findOrCreate(slot.name, path);
       if (h) resolved[path] = h.id;
     });
     const root = working.find((h) => h.id === rootId);
