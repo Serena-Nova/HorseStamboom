@@ -89,6 +89,7 @@ function Icon({ size = 16, className = "", children, viewBox = "0 0 24 24" }) {
     children
   );
 }
+const Menu = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M4 6h16M4 12h16M4 18h16" }));
 const Plus = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M12 5v14M5 12h14" }));
 const X = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M18 6 6 18M6 6l12 12" }));
 const Search = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("circle", { cx: "11", cy: "11", r: "7" }), /* @__PURE__ */ React.createElement("path", { d: "m21 21-4.35-4.35" }));
@@ -436,7 +437,7 @@ function HorseSearchList({ horses, excludeId, onPick, onCreate, genderFilter }) 
     }
   ), /* @__PURE__ */ React.createElement("div", { className: "mt-2 max-h-56 overflow-auto" }, results.map((h) => /* @__PURE__ */ React.createElement("button", { key: h.id, onClick: () => onPick(h.id), className: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-stone-200 hover:bg-stone-800" }, /* @__PURE__ */ React.createElement("span", { className: "h-2.5 w-2.5 rounded-full shrink-0", style: { background: h.color } }), h.name)), q.trim() && /* @__PURE__ */ React.createElement("button", { onClick: () => onCreate(q.trim()), className: "mt-1 flex w-full items-center gap-2 rounded-lg border-t border-stone-800 px-2 py-2 text-left text-sm text-amber-500 hover:bg-stone-800" }, /* @__PURE__ */ React.createElement(Plus, { size: 14 }), ' Nieuw paard: "', q.trim(), '"'), similar.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "mt-2 flex items-start gap-1.5 rounded-lg border border-amber-700/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-400" }, /* @__PURE__ */ React.createElement(AlertTriangle, { size: 13, className: "mt-0.5 shrink-0" }), /* @__PURE__ */ React.createElement("span", null, "Lijkt op ", similar.map((h) => `"${h.name}"`).join(", "), " \u2014 bedoelde je dat paard? Een typefoutje maakt hier stiekem een dubbel paard van, waardoor de inteelt-check niet meer klopt."))));
 }
-function HorseCard({ horse, onDrag, onDragEnd, onRename, onCycleGender, onDelete, onPickParent, onSelectForConnect, connectSelected, highlighted, occurrenceCount, map, reuseCount, zoom, onOpenNotes }) {
+function HorseCard({ horse, onDrag, onDragEnd, onRename, onCycleGender, onDelete, onPickParent, onSelectForConnect, connecting, connectSelected, highlighted, occurrenceCount, map, reuseCount, zoom, onOpenNotes, onFocusToggle, isFocused }) {
   var _a, _b, _c;
   const [editing, setEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState(horse.name);
@@ -477,8 +478,8 @@ function HorseCard({ horse, onDrag, onDragEnd, onRename, onCycleGender, onDelete
         className: "group relative rounded-lg border px-2.5 py-2 shadow-md cursor-grab active:cursor-grabbing",
         style: {
           background: horse.color + "1f",
-          borderColor: highlighted ? "#F0B429" : connectSelected ? "#60A5FA" : horse.color + "66",
-          boxShadow: highlighted ? "0 0 0 2px #F0B42988" : connectSelected ? "0 0 0 2px #60A5FA88" : "none"
+          borderColor: highlighted ? "#F0B429" : connectSelected ? "#60A5FA" : isFocused ? "#34D399" : horse.color + "66",
+          boxShadow: highlighted ? "0 0 0 2px #F0B42988" : connectSelected ? "0 0 0 2px #60A5FA88" : isFocused ? "0 0 0 2px #34D39988" : "none"
         }
       },
       occurrenceCount > 1 && /* @__PURE__ */ React.createElement("span", { className: "absolute -right-2 -top-2 rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-stone-950" }, "\xD7", occurrenceCount),
@@ -519,10 +520,10 @@ function HorseCard({ horse, onDrag, onDragEnd, onRename, onCycleGender, onDelete
           },
           onClick: (e) => {
             e.stopPropagation();
-            onSelectForConnect(horse.id);
+            connecting ? onSelectForConnect(horse.id) : onFocusToggle(horse.id);
           },
           className: "min-w-0 flex-1 truncate text-left text-sm font-medium text-stone-100",
-          title: "Dubbeltik om naam te wijzigen"
+          title: connecting ? void 0 : "Tik om zijn stamboom te focussen \u2014 dubbeltik om naam te wijzigen"
         },
         horse.name
       ), /* @__PURE__ */ React.createElement("button", { onClick: (e) => {
@@ -690,6 +691,37 @@ function BestMatchesModal({ matches, map, depth, onClose, onPick }) {
     );
   })));
 }
+function HorseSidebar({ horses, focusId, focusMode, onPick, onShowAll, onClose }) {
+  const [q, setQ] = useState("");
+  const sorted = [...horses].filter((h) => h.name.toLowerCase().includes(q.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name));
+  return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-stone-800 bg-stone-950 shadow-2xl" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between border-b border-stone-800 px-3 py-2.5" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs uppercase tracking-wide text-stone-500" }, "Paarden (", horses.length, ")"), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "text-stone-500 hover:text-stone-200" }, /* @__PURE__ */ React.createElement(X, { size: 16 }))), /* @__PURE__ */ React.createElement("div", { className: "border-b border-stone-800 px-3 py-2" }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      value: q,
+      onChange: (e) => setQ(e.target.value),
+      placeholder: "Zoeken\u2026",
+      autoFocus: true,
+      className: "w-full rounded-lg border border-stone-700 bg-stone-900 px-2.5 py-1.5 text-sm text-stone-100 outline-none focus:border-amber-600/60"
+    }
+  )), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: onShowAll,
+      className: `flex items-center gap-2 border-b border-stone-800 px-3 py-2 text-left text-sm ${!focusMode ? "bg-amber-500/10 text-amber-400" : "text-stone-300 hover:bg-stone-900"}`
+    },
+    "Toon alle paarden"
+  ), /* @__PURE__ */ React.createElement("div", { className: "flex-1 overflow-y-auto" }, sorted.map((h) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: h.id,
+      onClick: () => onPick(h.id),
+      className: `flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${focusMode && focusId === h.id ? "bg-emerald-500/10 text-emerald-400" : "text-stone-300 hover:bg-stone-900"}`
+    },
+    /* @__PURE__ */ React.createElement("span", { className: "h-2 w-2 rounded-full shrink-0", style: { background: h.color } }),
+    /* @__PURE__ */ React.createElement("span", { className: "shrink-0 text-xs text-stone-500" }, GENDER_ICON[h.gender] || "\u2022"),
+    /* @__PURE__ */ React.createElement("span", { className: "min-w-0 flex-1 truncate" }, h.name)
+  )), sorted.length === 0 && /* @__PURE__ */ React.createElement("p", { className: "px-3 py-4 text-center text-xs text-stone-600" }, "Geen paarden gevonden.")));
+}
 function App() {
   var _a, _b;
   const { horses, loading, persist, saveState } = useHorses();
@@ -710,6 +742,7 @@ function App() {
   const [depth, setDepth] = useState(4);
   const [zoom, setZoom] = useState(1);
   const [focusMode, setFocusMode] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
   const dragPositions = useRef({});
   const [, forceTick] = useState(0);
   const canvasRef = useRef(null);
@@ -788,6 +821,14 @@ function App() {
   const applyRelation = async (childId, role, parentId) => {
     persistHorses(horses.map((h) => h.id === childId ? { ...h, [role]: parentId } : h));
     setRelationPair(null);
+  };
+  const onFocusToggle = (id) => {
+    if (focusMode && focusId === id) {
+      setFocusMode(false);
+      return;
+    }
+    setFocusId(id);
+    setFocusMode(true);
   };
   const importHorses = useCallback(async (entries) => {
     const working = [...horses];
@@ -922,7 +963,7 @@ function App() {
     return /* @__PURE__ */ React.createElement("div", { className: "flex h-screen items-center justify-center bg-stone-950" }, /* @__PURE__ */ React.createElement(Loader2, { className: "animate-spin text-stone-600", size: 28 }));
   }
   const dimNonMatching = query.trim().length > 0;
-  return /* @__PURE__ */ React.createElement("div", { className: "flex h-screen flex-col bg-stone-950 text-stone-200", style: { fontFamily: "ui-sans-serif, system-ui" } }, /* @__PURE__ */ React.createElement("style", null, `.font-serif-hn { font-family: 'Georgia', 'Iowan Old Style', serif; }`), /* @__PURE__ */ React.createElement("header", { className: "shrink-0 border-b border-stone-800 bg-stone-900/60 px-4 py-2.5" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(Link2, { className: "text-amber-500", size: 18 }), /* @__PURE__ */ React.createElement("h1", { className: "font-serif-hn text-lg text-stone-50" }, "Horse Nation \u2014 Stamboom")), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2.5" }, /* @__PURE__ */ React.createElement(SaveIndicator, { state: saveState }), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-stone-500" }, horses.length, " paarden"))), /* @__PURE__ */ React.createElement("div", { className: "mt-2 flex flex-wrap items-center gap-2" }, /* @__PURE__ */ React.createElement("form", { onSubmit: (e) => {
+  return /* @__PURE__ */ React.createElement("div", { className: "flex h-screen flex-col bg-stone-950 text-stone-200", style: { fontFamily: "ui-sans-serif, system-ui" } }, /* @__PURE__ */ React.createElement("style", null, `.font-serif-hn { font-family: 'Georgia', 'Iowan Old Style', serif; }`), /* @__PURE__ */ React.createElement("header", { className: "shrink-0 border-b border-stone-800 bg-stone-900/60 px-4 py-2.5" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(Link2, { className: "text-amber-500", size: 18 }), /* @__PURE__ */ React.createElement("h1", { className: "font-serif-hn text-lg text-stone-50" }, "Horse Nation \u2014 Stamboom")), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2.5" }, /* @__PURE__ */ React.createElement(SaveIndicator, { state: saveState }), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-stone-500" }, horses.length, " paarden"))), /* @__PURE__ */ React.createElement("div", { className: "mt-2 flex flex-wrap items-center gap-2" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowSidebar((v) => !v), className: `flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs ${showSidebar ? "border-amber-600/60 text-amber-400 bg-amber-500/10" : "border-stone-700 text-stone-300 hover:border-amber-600/60 hover:text-amber-400"}` }, /* @__PURE__ */ React.createElement(Menu, { size: 13 }), " Paarden"), /* @__PURE__ */ React.createElement("form", { onSubmit: (e) => {
     e.preventDefault();
     jumpToMatch();
   }, className: "relative" }, /* @__PURE__ */ React.createElement(Search, { size: 13, className: "absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-500" }), /* @__PURE__ */ React.createElement(
@@ -964,7 +1005,17 @@ function App() {
   })(), compareResult && /* @__PURE__ */ React.createElement("div", { className: "mt-3" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3 rounded-lg border px-3 py-2.5", style: { borderColor: compareResult.cat.border, background: compareResult.cat.bg } }, /* @__PURE__ */ React.createElement("span", { className: "text-2xl font-bold", style: { color: compareResult.cat.color } }, (compareResult.f * 100).toFixed(2), "%"), /* @__PURE__ */ React.createElement("div", { className: "text-sm" }, /* @__PURE__ */ React.createElement("p", { style: { color: compareResult.cat.color }, className: "font-medium" }, "Verwachte veulen-COI \u2014 ", compareResult.cat.label), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-400" }, compareResult.f <= 0.05 ? "Lage inteelt, geen reden tot zorgen." : compareResult.f <= 0.125 ? "Merkbare inteelt \u2014 overweeg een minder verwante partner." : "Sterke inteelt \u2014 kans op inteeltdepressie bij het veulen."))), compareResult.contributions.length > 0 && /* @__PURE__ */ React.createElement("ul", { className: "mt-2 space-y-0.5 text-xs text-stone-300" }, compareResult.contributions.map((c) => {
     var _a2, _b2;
     return /* @__PURE__ */ React.createElement("li", { key: c.id, className: "flex items-center gap-1.5" }, /* @__PURE__ */ React.createElement("span", { className: "h-2 w-2 rounded-full shrink-0", style: { background: (_a2 = map.get(c.id)) == null ? void 0 : _a2.color } }), /* @__PURE__ */ React.createElement("b", null, (_b2 = map.get(c.id)) == null ? void 0 : _b2.name), /* @__PURE__ */ React.createElement("span", { className: "text-stone-500" }, "\u2014 +", (c.contribution * 100).toFixed(2), "% (dichtsbijzijnde gen ", c.minN1, "/", c.minN2, ")"));
-  })), compareResult.genderWarning && /* @__PURE__ */ React.createElement("p", { className: "mt-1.5 text-xs text-stone-500" }, "Let op: dit zijn twee paarden van hetzelfde geslacht.")))), /* @__PURE__ */ React.createElement("div", { ref: canvasRef, className: "relative flex-1 overflow-auto bg-[radial-gradient(circle,_#292524_1px,_transparent_1px)] [background-size:22px_22px]" }, /* @__PURE__ */ React.createElement("div", { style: { width: canvasSize.width * zoom, height: canvasSize.height * zoom } }, /* @__PURE__ */ React.createElement("div", { className: "relative", style: { width: canvasSize.width, height: canvasSize.height, transform: `scale(${zoom})`, transformOrigin: "0 0" } }, horses.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "absolute inset-0 flex items-center justify-center" }, /* @__PURE__ */ React.createElement("div", { className: "rounded-xl border border-dashed border-stone-800 px-8 py-10 text-center text-stone-500" }, "Nog geen paarden. Tik op ", /* @__PURE__ */ React.createElement("b", null, "+ Paard"), " om te beginnen, of ", /* @__PURE__ */ React.createElement("b", null, "Importeren"), ".")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("svg", { className: "pointer-events-none absolute left-0 top-0", width: canvasSize.width, height: canvasSize.height }, /* @__PURE__ */ React.createElement(ConnectorLines, { horses: focusVisibleIds ? renderHorses.filter((h) => focusVisibleIds.has(h.id)) : renderHorses, map: renderMap, highlightIds: compareResult == null ? void 0 : compareResult.highlightIds, visibleIds: focusVisibleIds })), (focusVisibleIds ? renderHorses.filter((h) => focusVisibleIds.has(h.id)) : renderHorses).map((h) => {
+  })), compareResult.genderWarning && /* @__PURE__ */ React.createElement("p", { className: "mt-1.5 text-xs text-stone-500" }, "Let op: dit zijn twee paarden van hetzelfde geslacht.")))), /* @__PURE__ */ React.createElement("div", { ref: canvasRef, className: "relative flex-1 overflow-auto bg-[radial-gradient(circle,_#292524_1px,_transparent_1px)] [background-size:22px_22px]" }, showSidebar && /* @__PURE__ */ React.createElement(
+    HorseSidebar,
+    {
+      horses,
+      focusId,
+      focusMode,
+      onPick: (id) => onFocusToggle(id),
+      onShowAll: () => setFocusMode(false),
+      onClose: () => setShowSidebar(false)
+    }
+  ), /* @__PURE__ */ React.createElement("div", { style: { width: canvasSize.width * zoom, height: canvasSize.height * zoom } }, /* @__PURE__ */ React.createElement("div", { className: "relative", style: { width: canvasSize.width, height: canvasSize.height, transform: `scale(${zoom})`, transformOrigin: "0 0" } }, horses.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "absolute inset-0 flex items-center justify-center" }, /* @__PURE__ */ React.createElement("div", { className: "rounded-xl border border-dashed border-stone-800 px-8 py-10 text-center text-stone-500" }, "Nog geen paarden. Tik op ", /* @__PURE__ */ React.createElement("b", null, "+ Paard"), " om te beginnen, of ", /* @__PURE__ */ React.createElement("b", null, "Importeren"), ".")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("svg", { className: "pointer-events-none absolute left-0 top-0", width: canvasSize.width, height: canvasSize.height }, /* @__PURE__ */ React.createElement(ConnectorLines, { horses: focusVisibleIds ? renderHorses.filter((h) => focusVisibleIds.has(h.id)) : renderHorses, map: renderMap, highlightIds: compareResult == null ? void 0 : compareResult.highlightIds, visibleIds: focusVisibleIds })), (focusVisibleIds ? renderHorses.filter((h) => focusVisibleIds.has(h.id)) : renderHorses).map((h) => {
     var _a2;
     const matches = !dimNonMatching || h.name.toLowerCase().includes(query.toLowerCase());
     const highlighted = ((_a2 = compareResult == null ? void 0 : compareResult.highlightIds) == null ? void 0 : _a2.has(h.id)) || false;
@@ -985,10 +1036,13 @@ function App() {
         onPickParent,
         onSelectForConnect: connectFrom ? onSelectForConnect : () => {
         },
+        connecting: !!connectFrom,
         connectSelected: connectFrom === h.id,
         highlighted,
         occurrenceCount: occ,
-        onOpenNotes: setNoteEditId
+        onOpenNotes: setNoteEditId,
+        onFocusToggle,
+        isFocused: focusMode && focusId === h.id
       }
     ));
   }))))), showImport && /* @__PURE__ */ React.createElement(ImportModal, { onClose: () => setShowImport(false), onImport: importHorses }), noteEditId && map.get(noteEditId) && /* @__PURE__ */ React.createElement(NotesModal, { horse: map.get(noteEditId), onClose: () => setNoteEditId(null), onSave: saveNotes }), showBestMatches && /* @__PURE__ */ React.createElement(
