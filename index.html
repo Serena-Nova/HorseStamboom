@@ -321,19 +321,43 @@ function autoLayout(horses) {
     colCache.set(id, c);
     return c;
   };
-  const cols = {};
+  const xCache = /* @__PURE__ */ new Map();
+  const xVisiting = /* @__PURE__ */ new Set();
+  let cursor = 0;
+  const xOf = (id) => {
+    if (xCache.has(id)) return xCache.get(id);
+    if (xVisiting.has(id)) return cursor;
+    xVisiting.add(id);
+    const h = map.get(id);
+    const sire = h && h.sireId ? map.get(h.sireId) : null;
+    const dam = h && h.damId ? map.get(h.damId) : null;
+    let x;
+    if (sire || dam) {
+      const xs = [];
+      if (sire) xs.push(xOf(sire.id));
+      if (dam) xs.push(xOf(dam.id));
+      x = xs.reduce((a, b) => a + b, 0) / xs.length;
+    } else {
+      x = cursor;
+      cursor += 1;
+    }
+    xVisiting.delete(id);
+    xCache.set(id, x);
+    return x;
+  };
+  const referenced = /* @__PURE__ */ new Set();
   horses.forEach((h) => {
-    const c = colOf(h.id);
-    cols[c] = cols[c] || [];
-    cols[c].push(h.id);
+    if (h.sireId) referenced.add(h.sireId);
+    if (h.damId) referenced.add(h.damId);
   });
-  const colNums = Object.keys(cols).map(Number);
-  const maxCol = colNums.length ? Math.max(...colNums) : 0;
+  const roots = horses.filter((h) => !referenced.has(h.id));
+  (roots.length ? roots : horses).forEach((h) => xOf(h.id));
+  horses.forEach((h) => {
+    if (!xCache.has(h.id)) xOf(h.id);
+  });
   const positions = {};
-  colNums.sort((a, b) => a - b).forEach((c) => {
-    cols[c].forEach((id, i) => {
-      positions[id] = { x: i * COL_W + 40, y: c * ROW_H + 40 };
-    });
+  horses.forEach((h) => {
+    positions[h.id] = { x: xOf(h.id) * COL_W + 40, y: colOf(h.id) * ROW_H + 40 };
   });
   return positions;
 }
