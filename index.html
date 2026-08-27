@@ -332,7 +332,7 @@ function autoLayout(horses) {
   const positions = {};
   colNums.sort((a, b) => a - b).forEach((c) => {
     cols[c].forEach((id, i) => {
-      positions[id] = { x: i * COL_W + 40, y: (maxCol - c) * ROW_H + 40 };
+      positions[id] = { x: i * COL_W + 40, y: c * ROW_H + 40 };
     });
   });
   return positions;
